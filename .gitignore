@@ -1,0 +1,5 @@
+venv/
+weights/
+datarepo/
+finalized_model.sav
+.env
