@@ -1,0 +1,13 @@
+tensorflow
+gdown
+keras
+matplotlib
+opencv-python
+scikit-learn
+pandas
+
+fastapi
+uvicorn
+python-multipart
+sqlalchemy
+psycopg2-binary
