@@ -1,3 +1,5 @@
+import time
+import cv2
 import pickle
 import tempfile
 from fastapi import FastAPI, UploadFile, Depends, status
@@ -20,6 +22,31 @@ with open('finalized_model.sav', 'rb') as model_file:
 
 # Load feature extraction model (adjust paths as needed)
 feature_extractor = getFeatureExtractor('weights/weights.h5', 'fc6')
+
+
+# def capture_video(duration=20, output_file='output.mp4'):
+#     # Start video capture
+#     cap = cv2.VideoCapture(0)
+
+#     # Define the codec and create VideoWriter object
+#     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+#     out = cv2.VideoWriter(output_file, fourcc, 20.0, (640, 480))
+
+#     start_time = time.time()
+#     while int(time.time() - start_time) < duration:
+#         ret, frame = cap.read()
+#         if ret:
+#             out.write(frame)
+#         else:
+#             break
+
+#     # Release everything
+#     cap.release()
+#     out.release()
+#     cv2.destroyAllWindows()
+
+
+# capture_video()
 
 
 @app.post("/predict", tags=["Prediction"])
@@ -58,7 +85,7 @@ def get_person(person_id: int, db: Session = Depends(get_db)):
     return db.query(models.PersonModel).filter(models.PersonModel.id == person_id).first()
 
 
-@app.get("/get-people", tags=["CRUD"])
+@app.get("/people", tags=["CRUD"])
 def get_people(db: Session = Depends(get_db)):
     people = db.query(models.PersonModel).all()
     return {"data": people}
@@ -99,7 +126,7 @@ async def change_sos_status(person_id: int, db: Session = Depends(get_db)):
     db_person.is_alert = not db_person.is_alert
     db.commit()
 
-    if not previous_alert_status and db_person.is_alert: # Check if the status changed to true
+    if not previous_alert_status and db_person.is_alert:  # Check if the status changed to true
         print("Sending alert message")
         await send_alert_message(db_person.name, db_person.lat, db_person.lon, db_person.phone)
 
