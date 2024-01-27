@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from backend.db import get_db
 from fastapi import HTTPException
 from preprocess import *
-
+from bot import send_alert_message
 
 app = FastAPI()
 
@@ -89,12 +89,19 @@ def delete_all_people(db: Session = Depends(get_db)):
 
 
 @app.put("/sos", tags=["CRUD"], status_code=status.HTTP_202_ACCEPTED)
-def change_sos_status(person_id: int, db: Session = Depends(get_db)):
+async def change_sos_status(person_id: int, db: Session = Depends(get_db)):
     db_person = db.query(models.PersonModel).filter(
         models.PersonModel.id == person_id).first()
     if db_person is None:
         raise HTTPException(status_code=404, detail="Person not found")
 
+    previous_alert_status = db_person.is_alert
     db_person.is_alert = not db_person.is_alert
+    db.commit()
+
+    if not previous_alert_status and db_person.is_alert: # Check if the status changed to true
+        print("Sending alert message")
+        await send_alert_message(db_person.name, db_person.lat, db_person.lon)
+
     db.commit()
     return {"status ": db_person.is_alert}
