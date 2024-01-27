@@ -8,6 +8,13 @@ class Person(BaseModel):
     lat: float
     lon: float
     is_alert: bool
+    
+class Organizaiton(BaseModel):
+    name: str
+    phone: str
+    type: str
+    lat: float
+    lon: float
 
 
 # [(41.317061092634674, 69.22036785842795),

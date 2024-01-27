@@ -116,14 +116,14 @@ def delete_all_people(db: Session = Depends(get_db)):
 
 
 @app.put("/sos", tags=["CRUD"], status_code=status.HTTP_202_ACCEPTED)
-async def change_sos_status(person_id: int, db: Session = Depends(get_db)):
+async def change_sos_status(person_id: int, is_alert: bool, db: Session = Depends(get_db)):
     db_person = db.query(models.PersonModel).filter(
         models.PersonModel.id == person_id).first()
     if db_person is None:
         raise HTTPException(status_code=404, detail="Person not found")
 
     previous_alert_status = db_person.is_alert
-    db_person.is_alert = not db_person.is_alert
+    db_person.is_alert = is_alert
     db.commit()
 
     if not previous_alert_status and db_person.is_alert:  # Check if the status changed to true
@@ -131,4 +131,89 @@ async def change_sos_status(person_id: int, db: Session = Depends(get_db)):
         await send_alert_message(db_person.name, db_person.lat, db_person.lon, db_person.phone)
 
     db.commit()
-    return {"status ": db_person.is_alert}
+    return {"status": db_person.is_alert}
+
+
+@app.get("/organizations", tags=["Organizations"])
+def get_organizations():
+    return [
+        schemas.Organizaiton(
+            name="Расулова Муқаддам Мансуржановна",
+            phone="+99897 778-55-44",
+            type="shelter",
+            lat=41.26554340074899,
+            lon=69.21282040073154
+        ),
+        schemas.Organizaiton(
+            name="Насырова Сайра Жуманазаровна",
+            phone="+99891 307-22-09",
+            type="shelter",
+            lat=42.475490,
+            lon=59.604898
+        ),
+        schemas.Organizaiton(
+            name="Чимбайчиева Гавҳар Тажимуратовна",
+            phone="+99893 777-66-11",
+            type="shelter",
+            lat=42.420663,
+            lon=59.622300
+        ),
+        schemas.Organizaiton(
+            name="Махамадалиева Дилорам Шалатиповна",
+            phone="+99890 317-00-72",
+            type="shelter",
+            lat=41.0430733,
+            lon=69.3584931
+        ),
+        schemas.Organizaiton(
+            name="Батирова Сурия Файзуллаевна",
+            phone="+99890 317-00-72",
+            type="shelter",
+            lat=41.0430733,
+            lon=69.3584931
+        ),
+        schemas.Organizaiton(
+            name="Саидмуратова Сахобат Негматовна",
+            phone="+99899 379-60-12",
+            type="shelter",
+            lat=38.283027,
+            lon=67.901504
+        ),
+
+
+        schemas.Organizaiton(
+            name="Милиция",
+            phone="+99890 317-00-72",
+            type="mvd",
+            lat=41.321724,
+            lon=69.272971
+        ),
+        schemas.Organizaiton(
+            name="ГУМВД",
+            phone="+99890 317-00-72",
+            type="mvd",
+            lat=41.300622,
+            lon=69.285786
+        ),
+        schemas.Organizaiton(
+            name="Опорный пункт № 80",
+            phone="+99871 267-33-50",
+            type="mvd",
+            lat=41.329626,
+            lon=69.323361
+        ),
+        schemas.Organizaiton(
+            name="U137-sonli Ichki Ishlar Organlari Tayanch Punkti",
+            phone="+99899 873-66-80",
+            type="mvd",
+            lat=41.287774,
+            lon=69.299481
+        ),
+        schemas.Organizaiton(
+            name="Городской отдел милиции № 1",
+            phone="+99871 265-11-43",
+            type="mvd",
+            lat=41.319396,
+            lon=69.352414
+        ),
+    ]
