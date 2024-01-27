@@ -24,33 +24,8 @@ with open('finalized_model.sav', 'rb') as model_file:
 feature_extractor = getFeatureExtractor('weights/weights.h5', 'fc6')
 
 
-# def capture_video(duration=20, output_file='output.mp4'):
-#     # Start video capture
-#     cap = cv2.VideoCapture(0)
-
-#     # Define the codec and create VideoWriter object
-#     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-#     out = cv2.VideoWriter(output_file, fourcc, 20.0, (640, 480))
-
-#     start_time = time.time()
-#     while int(time.time() - start_time) < duration:
-#         ret, frame = cap.read()
-#         if ret:
-#             out.write(frame)
-#         else:
-#             break
-
-#     # Release everything
-#     cap.release()
-#     out.release()
-#     cv2.destroyAllWindows()
-
-
-# capture_video()
-
-
 @app.post("/predict", tags=["Prediction"])
-async def predict(file: UploadFile):
+async def predict(file: UploadFile, id: int, lat: float, lon: float, db: Session = Depends(get_db)):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
         temp_file.write(await file.read())
         temp_file_path = temp_file.name
@@ -75,6 +50,9 @@ async def predict(file: UploadFile):
         prediction_list) / len(prediction_list) > 0.5 else 0
 
     if aggregated_prediction == 1:
+        person = db.query(models.PersonModel).filter(
+            models.PersonModel.id == id).first()
+        await send_alert_message(person.name, lat, lon, person.phone)
         return {"prediction": 'violent'}
     else:
         return {"prediction": 'non-violent'}
