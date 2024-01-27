@@ -9,6 +9,7 @@ class PersonModel(Base):
     __tablename__ = "people"
 
     id = Column(Integer, primary_key=True)
+    phone = Column(String)
     name = Column(String)
     profile_img = Column(String)
     lat = Column(Float)

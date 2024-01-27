@@ -101,7 +101,7 @@ async def change_sos_status(person_id: int, db: Session = Depends(get_db)):
 
     if not previous_alert_status and db_person.is_alert: # Check if the status changed to true
         print("Sending alert message")
-        await send_alert_message(db_person.name, db_person.lat, db_person.lon)
+        await send_alert_message(db_person.name, db_person.lat, db_person.lon, db_person.phone)
 
     db.commit()
     return {"status ": db_person.is_alert}

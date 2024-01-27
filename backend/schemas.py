@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class Person(BaseModel):
     name: str
+    phone: str
     profile_img: str
     lat: float
     lon: float
