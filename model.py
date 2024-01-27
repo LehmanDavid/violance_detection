@@ -1,8 +1,12 @@
 import pickle
 import tempfile
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, Depends, status
 import pickle
 import numpy as np
+from backend import models, schemas
+from sqlalchemy.orm import Session
+from fastapi import FastAPI
+from backend.db import get_db
 
 from preprocess import *
 
@@ -18,7 +22,7 @@ with open('finalized_model.sav', 'rb') as model_file:
 feature_extractor = getFeatureExtractor('weights/weights.h5', 'fc6')
 
 
-@app.post("/predict")
+@app.post("/predict", tags = ["Prediction"])
 async def predict(file: UploadFile):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
         temp_file.write(await file.read())
@@ -48,3 +52,33 @@ async def predict(file: UploadFile):
     else:
         return {"prediction": 'non-violent'}
 
+
+
+@app.get("/people/{person_id}", tags=["CRUD"])
+def get_person(person_id: int, db: Session = Depends(get_db)):
+    return db.query(models.PersonModel).filter(models.PersonModel.id == person_id).first()
+
+@app.get("/get-people", tags=["CRUD"])
+def get_people(db: Session = Depends(get_db)):
+    people = db.query(models.PersonModel).all()
+    return {"data": people}
+
+@app.post("/create-person", status_code=status.HTTP_201_CREATED, tags=["CRUD"])
+def create_person(person: schemas.Person, db: Session = Depends(get_db)):
+    db_person = models.PersonModel(**person.model_dump())
+    db.add(db_person)
+    db.commit()
+    db.refresh(db_person)
+    return {"status: ok"}
+
+@app.delete("/people/{person_id}", tags=["CRUD"])
+def delete_person(person_id: int, db: Session = Depends(get_db)):
+    db.query(models.PersonModel).filter(models.PersonModel.id == person_id).delete()
+    db.commit()
+    return {"status: ok"}
+
+@app.delete("/people", tags=["CRUD"])
+def delete_all_people(db: Session = Depends(get_db)):
+    db.query(models.PersonModel).delete()
+    db.commit()
+    return {"status: ok"}
