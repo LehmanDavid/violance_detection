@@ -1,4 +1,4 @@
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application
 import os
 
 # Initialize the Telegram Bot
