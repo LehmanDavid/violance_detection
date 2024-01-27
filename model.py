@@ -7,7 +7,7 @@ from backend import models, schemas
 from sqlalchemy.orm import Session
 from fastapi import FastAPI
 from backend.db import get_db
-
+from fastapi import HTTPException
 from preprocess import *
 
 
@@ -86,3 +86,15 @@ def delete_all_people(db: Session = Depends(get_db)):
     db.query(models.PersonModel).delete()
     db.commit()
     return {"status: ok"}
+
+
+@app.put("/sos", tags=["CRUD"], status_code=status.HTTP_202_ACCEPTED)
+def change_sos_status(person_id: int, db: Session = Depends(get_db)):
+    db_person = db.query(models.PersonModel).filter(
+        models.PersonModel.id == person_id).first()
+    if db_person is None:
+        raise HTTPException(status_code=404, detail="Person not found")
+
+    db_person.is_alert = not db_person.is_alert
+    db.commit()
+    return {"status ": db_person.is_alert}
