@@ -14,42 +14,59 @@ class SOSPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<PredictionCubit, VideoUploadState>(
-      listener: (context, state) {
-        if (state is VideoUploadSuccess) {
-          String message;
-          Color backgroundColor;
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<PredictionCubit, VideoUploadState>(
+          listener: (context, state) {
+            if (state is VideoUploadSuccess) {
+              String message;
+              Color backgroundColor;
 
-          if (state.result['prediction'] == 'violent') {
-            message = 'Violent Actions detected';
-            backgroundColor = Colors.red;
-          } else {
-            message = 'Violent actions are not detected';
-            backgroundColor = Colors.green;
-          }
+              if (state.result['prediction'] == 'violent') {
+                message = 'Мы увидели насильственные действия';
+                backgroundColor = Colors.red;
+              } else {
+                message = 'Мы не увидели насильственных действий';
+                backgroundColor = Colors.green;
+              }
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                message,
-                style: const TextStyle(color: Colors.white),
-              ),
-              backgroundColor: backgroundColor,
-            ),
-          );
-        }
-        if (state is VideoUploadError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                state.error,
-                style: const TextStyle(color: Colors.white),
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      },
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    message,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  backgroundColor: backgroundColor,
+                ),
+              );
+            }
+            if (state is VideoUploadError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.error,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        ),
+        BlocListener<SosCubit, SosState>(
+          listener: (context, state) {
+            if (state is SosSent) {
+              context.push(
+                Routes.map.path,
+                extra: {
+                  'cubit': context.read<SosCubit>(),
+                  'isSending': true,
+                },
+              );
+            }
+          },
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(
           actions: [
@@ -93,14 +110,20 @@ class SOSPage extends StatelessWidget {
                     shape: const CircleBorder(),
                     child: InkWell(
                       onTap: () {
-                        context.read<SosCubit>().getReady();
-                        context.push(
-                          Routes.map.path,
-                          extra: {
-                            'cubit': context.read<SosCubit>(),
-                            'isSending': true,
-                          },
-                        );
+                        showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            constraints: const BoxConstraints(
+                              maxHeight: 350,
+                            ),
+                            builder: (ctx) {
+                              return IntentionModal(
+                                cubit: context.read<SosCubit>(),
+                              );
+                            });
                       },
                       borderRadius: BorderRadius.circular(95),
                       child: const Center(

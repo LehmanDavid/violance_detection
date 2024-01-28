@@ -224,16 +224,16 @@ class _MapPageState extends State<MapPage> {
                   return YandexMap(
                     onMapCreated: _onMapCreated,
                     mapObjects: [
-                      if (friendsState is FriendsLoaded)
-                        _getClusterizedFriendsCollection(
-                          placemarks: friendsState.mapObjects,
-                        ),
                       if (serviceState is ServicesLoaded)
                         _getClusterizedServiceCollection(
                           placemarks: _getPlacemarkServiceObjects(
                             context,
                             serviceState.services,
                           ),
+                        ),
+                      if (friendsState is FriendsLoaded)
+                        _getClusterizedFriendsCollection(
+                          placemarks: friendsState.mapObjects,
                         ),
                     ],
                     onUserLocationAdded: (view) async {
