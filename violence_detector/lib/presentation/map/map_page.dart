@@ -2,10 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:violence_detector/application/sos/sos_cubit.dart';
+import 'package:violence_detector/application/friends/friends_cubit.dart';
+import 'package:violence_detector/application/service/service_cubit.dart';
 import 'package:violence_detector/core/injection/injection.dart';
 import 'package:violence_detector/core/services/location_service.dart';
-import 'package:violence_detector/presentation/map/widgets/intention_modal.dart';
+import 'package:violence_detector/core/ui/consts/app_icons.dart';
+import 'package:violence_detector/core/ui/theme/palette.dart';
+import 'package:violence_detector/domain/entities/service_entity.dart';
+import 'package:violence_detector/domain/entities/service_type.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 import 'widgets/friends_drawer.dart';
@@ -25,23 +29,19 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   YandexMapController? _mapController;
-  String locationName = '';
-  final List<MapObject> mapObjects = [];
-  final Point tashkent = const Point(latitude: 41.2995, longitude: 69.2401);
+  String _locationName = '';
+  // final _mapObjects = <MapObject>[];
+  // final _tashkent = const Point(latitude: 41.2995, longitude: 69.2401);
 
-  @override
-  void initState() {
-    _addMarkers();
-    super.initState();
-  }
+  double _mapZoom = 0.0;
 
-  void _addMarkers() {
-    final placemark = PlacemarkMapObject(
-      mapId: MapObjectId(tashkent.latitude.toString()),
-      point: tashkent,
-    );
-    mapObjects.add(placemark);
-  }
+  // void _addMarkers() {
+  //   final placemark = PlacemarkMapObject(
+  //     mapId: MapObjectId(_tashkent.latitude.toString()),
+  //     point: _tashkent,
+  //   );
+
+  // }
 
   Future<void> _onMapCreated(YandexMapController controller) async {
     _mapController = controller;
@@ -91,10 +91,107 @@ class _MapPageState extends State<MapPage> {
         // }
 
         setState(() {
-          locationName = items.first.name;
+          _locationName = items.first.name;
         });
       }
     });
+  }
+
+  ClusterizedPlacemarkCollection _getClusterizedServiceCollection({
+    required List<PlacemarkMapObject> placemarks,
+  }) {
+    return ClusterizedPlacemarkCollection(
+        mapId: const MapObjectId('clusterized-1'),
+        placemarks: placemarks,
+        radius: 50,
+        minZoom: 15,
+        onClusterAdded: (self, cluster) async {
+          return cluster.copyWith(
+            appearance: cluster.appearance.copyWith(
+              opacity: 1.0,
+            ),
+          );
+        },
+        onClusterTap: (self, cluster) async {
+          await _mapController?.moveCamera(
+            animation: const MapAnimation(
+              type: MapAnimationType.linear,
+              duration: 0.3,
+            ),
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: cluster.placemarks.first.point,
+                zoom: _mapZoom + 1,
+              ),
+            ),
+          );
+        });
+  }
+
+  ClusterizedPlacemarkCollection _getClusterizedFriendsCollection({
+    required List<PlacemarkMapObject> placemarks,
+  }) {
+    return ClusterizedPlacemarkCollection(
+        mapId: const MapObjectId('clusterized-2'),
+        placemarks: placemarks,
+        radius: 10,
+        minZoom: 15,
+        onClusterAdded: (self, cluster) async {
+          return cluster.copyWith(
+            appearance: cluster.appearance.copyWith(
+              opacity: 1.0,
+            ),
+          );
+        },
+        onClusterTap: (self, cluster) async {
+          await _mapController?.moveCamera(
+            animation: const MapAnimation(
+              type: MapAnimationType.linear,
+              duration: 0.3,
+            ),
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: cluster.placemarks.first.point,
+                zoom: _mapZoom + 1,
+              ),
+            ),
+          );
+        });
+  }
+
+  List<PlacemarkMapObject> _getPlacemarkServiceObjects(
+    BuildContext context,
+    List<ServiceEntity> services,
+  ) {
+    return services
+        .map(
+          (service) => PlacemarkMapObject(
+            mapId: MapObjectId('MapObject $service'),
+            point: Point(latitude: service.lat, longitude: service.lon),
+            opacity: 1,
+            icon: PlacemarkIcon.single(
+              PlacemarkIconStyle(
+                image: BitmapDescriptor.fromAssetImage(
+                  service.type == ServiceType.mvd
+                      ? AppIcons.mvdIcon
+                      : AppIcons.shelterIcon,
+                ),
+                scale: 1,
+              ),
+            ),
+            onTap: (_, __) => showModalBottomSheet(
+              context: context,
+              constraints: const BoxConstraints.expand(
+                width: double.maxFinite,
+                height: 250,
+              ),
+              builder: (context) => ModalBodyView(
+                point: service,
+              ),
+            ),
+          ),
+        )
+        .toList();
   }
 
   @override
@@ -109,7 +206,7 @@ class _MapPageState extends State<MapPage> {
               },
               icon: const Icon(
                 Icons.menu_rounded,
-                color: Colors.deepOrange,
+                color: Palette.primary600,
                 size: MapPage._drawerIconSize,
               ),
             );
@@ -117,32 +214,117 @@ class _MapPageState extends State<MapPage> {
         ],
       ),
       endDrawer: const FriendsDrawer(),
-      body: BlocListener<SosCubit, SosState>(
-        listener: (context, state) {
-          if (state is SosSending) {
-            if (widget.isSending) {
-              showBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) {
-                    return const IntentionModal();
-                  });
-            }
-          }
-        },
-        child: Stack(
-          children: [
-            LocationLabel(locationName: locationName),
-            YandexMap(
-              mapObjects: mapObjects,
-              onUserLocationAdded: (view) async {
-                view.pin;
-                return view;
-              },
-              onMapCreated: _onMapCreated,
-            ),
-          ].reversed.toList(),
-        ),
+      body: Stack(
+        children: [
+          LocationLabel(locationName: _locationName),
+          BlocBuilder<FriendsCubit, FriendsState>(
+            builder: (context, friendsState) {
+              return BlocBuilder<ServiceCubit, ServiceState>(
+                builder: (context, serviceState) {
+                  return YandexMap(
+                    onMapCreated: _onMapCreated,
+                    mapObjects: [
+                      if (friendsState is FriendsLoaded)
+                        _getClusterizedFriendsCollection(
+                          placemarks: friendsState.mapObjects,
+                        ),
+                      if (serviceState is ServicesLoaded)
+                        _getClusterizedServiceCollection(
+                          placemarks: _getPlacemarkServiceObjects(
+                            context,
+                            serviceState.services,
+                          ),
+                        ),
+                    ],
+                    onUserLocationAdded: (view) async {
+                      view.pin;
+                      return view;
+                    },
+                    onCameraPositionChanged: (cameraPosition, _, __) {
+                      setState(() {
+                        _mapZoom = cameraPosition.zoom;
+                      });
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ].reversed.toList(),
+      ),
+    );
+  }
+}
+
+class ModalBodyView extends StatefulWidget {
+  final ServiceEntity point;
+
+  const ModalBodyView({super.key, required this.point});
+
+  @override
+  State<ModalBodyView> createState() => _ModalBodyViewState();
+}
+
+class _ModalBodyViewState extends State<ModalBodyView> {
+  String _locationName = '';
+
+  @override
+  Future<void> didChangeDependencies() async {
+    super.didChangeDependencies();
+    final result = YandexSearch.searchByPoint(
+      point: Point(latitude: widget.point.lat, longitude: widget.point.lat),
+      searchOptions: const SearchOptions(),
+    );
+
+    result.result.then((value) {
+      final items = value.items;
+      if (items != null) {
+        // String name = '';
+        // for (final element in items) {
+        //   name = name + element.name;
+        // }
+
+        setState(() {
+          _locationName = items.first.name;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            widget.point.type == ServiceType.mvd
+                ? 'Быстрое реагирование'
+                : 'Центр помощи',
+            style: const TextStyle(fontSize: 22),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            widget.point.name,
+            style: const TextStyle(fontSize: 18),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            widget.point.phone,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _locationName,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
       ),
     );
   }

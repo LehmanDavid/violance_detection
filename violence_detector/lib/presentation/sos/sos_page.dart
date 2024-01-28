@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:violence_detector/application/sos/sos_cubit.dart';
 import 'package:violence_detector/core/router/routes.dart';
 import 'package:violence_detector/core/ui/theme/palette.dart';
+import 'package:violence_detector/presentation/map/widgets/intention_modal.dart';
 
 import 'widgets/phone_call_button.dart';
 
@@ -53,26 +54,45 @@ class SOSPage extends StatelessWidget {
                 child: Material(
                   color: Palette.primary500,
                   shape: const CircleBorder(),
-                  child: InkWell(
-                    onTap: () {
-                      context.read<SosCubit>().getReady();
-                      context.push(
-                        Routes.map.path,
-                        extra: {
-                          'cubit': context.read<SosCubit>(),
-                          'isSending': true,
-                        },
-                      );
+                  child: BlocListener<SosCubit, SosState>(
+                    listener: (context, state) {
+                      if (state is SosSent) {
+                        context.push(
+                          Routes.map.path,
+                          extra: {
+                            'cubit': context.read<SosCubit>(),
+                            'isSending': true,
+                          },
+                        );
+                      }
                     },
-                    borderRadius: BorderRadius.circular(95),
-                    child: const Center(
-                      child: Text(
-                        'SOS',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 64,
-                          color: Colors.white,
+                    child: InkWell(
+                      onTap: () {
+                        showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            constraints: const BoxConstraints(
+                              maxHeight: 350,
+                            ),
+                            builder: (ctx) {
+                              return IntentionModal(
+                                cubit: context.read<SosCubit>(),
+                              );
+                            });
+                      },
+                      borderRadius: BorderRadius.circular(95),
+                      child: const Center(
+                        child: Text(
+                          'SOS',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 64,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),

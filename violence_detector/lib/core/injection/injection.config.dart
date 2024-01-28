@@ -11,11 +11,14 @@
 import 'package:get_it/get_it.dart' as _i1;
 import 'package:injectable/injectable.dart' as _i2;
 import 'package:violence_detector/core/network/dio_client.dart' as _i3;
-import 'package:violence_detector/core/services/location_service.dart' as _i8;
+import 'package:violence_detector/core/services/location_service.dart' as _i10;
 import 'package:violence_detector/domain/repositories/i_friends.dart' as _i4;
+import 'package:violence_detector/domain/repositories/I_services.dart' as _i8;
 import 'package:violence_detector/domain/repositories/i_sos.dart' as _i6;
 import 'package:violence_detector/infrastructure/repositories/friends_repository.dart'
     as _i5;
+import 'package:violence_detector/infrastructure/repositories/services_repository.dart'
+    as _i9;
 import 'package:violence_detector/infrastructure/repositories/sos_repository.dart'
     as _i7;
 
@@ -34,7 +37,9 @@ extension GetItInjectableX on _i1.GetIt {
     gh.lazySingleton<_i4.IFriends>(
         () => _i5.FriendsRepository(gh<_i3.DioClient>()));
     gh.lazySingleton<_i6.ISOS>(() => _i7.SOSRepository(gh<_i3.DioClient>()));
-    gh.lazySingleton<_i8.LocationService>(() => _i8.LocationService());
+    gh.lazySingleton<_i8.IServices>(
+        () => _i9.ServicesRepository(gh<_i3.DioClient>()));
+    gh.lazySingleton<_i10.LocationService>(() => _i10.LocationService());
     return this;
   }
 }

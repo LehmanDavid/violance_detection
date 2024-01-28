@@ -11,7 +11,9 @@ final class FriendsLoading extends FriendsState {
 
 final class FriendsLoaded extends FriendsState {
   final List<FriendEntity> friends;
-  const FriendsLoaded({required this.friends});
+  final List<PlacemarkMapObject> mapObjects;
+
+  const FriendsLoaded({required this.friends, required this.mapObjects});
 }
 
 final class FriendsError extends FriendsState {

@@ -15,7 +15,7 @@ final class SOSRepository implements ISOS {
     final response = await _client.put(
       ApiRoutes.sos,
       queryParameters: {
-        'person_id': 5,
+        'person_id': 6,
         'is_alert': status,
       },
     );

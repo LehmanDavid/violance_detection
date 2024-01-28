@@ -7,7 +7,9 @@ import 'package:violence_detector/application/sos/sos_cubit.dart';
 import 'package:violence_detector/core/ui/theme/palette.dart';
 
 class IntentionModal extends StatefulWidget {
-  const IntentionModal({super.key});
+  final SosCubit cubit;
+
+  const IntentionModal({super.key, required this.cubit});
 
   @override
   State<IntentionModal> createState() => _IntentionModalState();
@@ -16,11 +18,12 @@ class IntentionModal extends StatefulWidget {
 class _IntentionModalState extends State<IntentionModal> {
   double _progress = 100;
   int seconds = 10;
+  Timer? timer;
 
   @override
   void initState() {
     super.initState();
-    Timer.periodic(const Duration(seconds: 1), (timer) {
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_progress > 0) {
         setState(() {
           seconds--;
@@ -35,6 +38,12 @@ class _IntentionModalState extends State<IntentionModal> {
   }
 
   @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
@@ -42,7 +51,7 @@ class _IntentionModalState extends State<IntentionModal> {
         children: [
           const SizedBox(height: 25),
           const Text(
-            'Отменить помощь',
+            'Запрос помощи',
             style: TextStyle(
               color: Palette.neutral600,
               fontSize: 18,
@@ -83,7 +92,7 @@ class _IntentionModalState extends State<IntentionModal> {
           ),
           const SizedBox(height: 18),
           const Text(
-            'Вы уверены, что в безопасности?',
+            'Вы уверены, что хотите запросить помощь?',
             style: TextStyle(
               color: Palette.neutral500,
               fontSize: 14,
@@ -106,7 +115,10 @@ class _IntentionModalState extends State<IntentionModal> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => context.read<SosCubit>().sendSOS(true),
+                    onPressed: () {
+                      widget.cubit.sendSOS(true);
+                      context.pop();
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Palette.primary100,
                     ),
