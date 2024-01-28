@@ -5,4 +5,5 @@ abstract final class ApiRoutes {
   static const people = '/people';
   static const sos = '/sos';
   static const organizations = '/organizations';
+  static const prediction = '/prediction';
 }
