@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:violence_detector/application/friends/friends_cubit.dart';
+import 'package:violence_detector/application/prediction/prediction_cubit.dart';
 import 'package:violence_detector/application/service/service_cubit.dart';
 import 'package:violence_detector/application/sos/sos_cubit.dart';
 
@@ -58,6 +59,9 @@ final class AppRouter {
                   BlocProvider(
                     create: (context) => SosCubit(),
                   ),
+                  BlocProvider(
+                    create: (context) => PredictionCubit(),
+                  )
                 ],
                 child: const SOSPage(),
               ),
