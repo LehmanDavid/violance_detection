@@ -111,6 +111,17 @@ async def change_sos_status(person_id: int, is_alert: bool, db: Session = Depend
     db.commit()
     return {"status": db_person.is_alert}
 
+@app.post("/person/{person_id}", tags=["CRUD"])
+def update_person(person_id: int, image_url: str,db: Session = Depends(get_db)):
+    db_person = db.query(models.PersonModel).filter(
+        models.PersonModel.id == person_id).first()
+    if db_person is None:
+        raise HTTPException(status_code=404, detail="Person not found")
+
+    db_person.profile_img = image_url
+
+    db.commit()
+    return {"status": "ok"}
 
 @app.get("/organizations", tags=["Organizations"])
 def get_organizations():
